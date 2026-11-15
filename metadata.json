@@ -1,0 +1,6 @@
+{
+  "name": "TAGORE",
+  "description": "Offline-first multimodal personal AI assistant with holographic ring interface, customizable Indian voice personalities, smart home control, and cross-device sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,133 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Synchronized TAGORE user identity, voice customization, and UI appearance settings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "preferredName": { "type": "string", "description": "User preferred name." },
+        "honorific": { "type": "string", "description": "Preferred form of address such as Sir." },
+        "voicePersonality": {
+          "type": "string",
+          "enum": ["JARVIS", "BIGG_BOSS", "FEMALE_INDIAN", "STANDARD_ASSISTANT"]
+        },
+        "voicePitch": { "type": "number", "description": "TTS voice pitch multiplier (0.5 - 2.0)." },
+        "voiceSpeed": { "type": "number", "description": "TTS voice speed multiplier (0.5 - 2.0)." },
+        "voiceTone": { "type": "string", "description": "Conversational tone preset." },
+        "responseLength": {
+          "type": "string",
+          "enum": ["CONCISE", "BALANCED", "DETAILED"]
+        },
+        "languageMode": {
+          "type": "string",
+          "enum": ["HINGLISH", "ENGLISH_IN", "HINDI"]
+        },
+        "darkMode": { "type": "boolean" },
+        "ringBrightness": { "type": "number" },
+        "animationSpeed": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "preferredName",
+        "honorific",
+        "voicePersonality",
+        "voicePitch",
+        "voiceSpeed",
+        "voiceTone",
+        "responseLength",
+        "languageMode",
+        "darkMode",
+        "ringBrightness",
+        "animationSpeed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MemoryItem": {
+      "title": "MemoryItem",
+      "description": "User-approved personal memory record synced across devices.",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "pinned": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "title", "content", "pinned", "createdAt", "updatedAt"]
+    },
+    "ProductivityItem": {
+      "title": "ProductivityItem",
+      "description": "Offline-first note, todo, reminder, or alarm synced across ecosystem.",
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "enum": ["NOTE", "TODO", "REMINDER", "ALARM"] },
+        "title": { "type": "string" },
+        "details": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "dueAtMillis": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["kind", "title", "details", "completed", "dueAtMillis", "createdAt", "updatedAt"]
+    },
+    "SmartDevice": {
+      "title": "SmartDevice",
+      "description": "Smart home device state controlled by TAGORE.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "room": { "type": "string" },
+        "category": { "type": "string", "enum": ["LIGHT", "AC", "FAN", "LOCK", "TV", "SCENE"] },
+        "isOn": { "type": "boolean" },
+        "level": { "type": "integer" },
+        "temperature": { "type": "integer" },
+        "isLocked": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "room", "category", "isOn", "level", "temperature", "isLocked", "createdAt", "updatedAt"]
+    },
+    "EcosystemDevice": {
+      "title": "EcosystemDevice",
+      "description": "Paired TAGORE ecosystem endpoint (Phone, Laptop, Watch, Tablet).",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "formFactor": { "type": "string", "enum": ["PHONE", "LAPTOP", "WATCH", "TABLET"] },
+        "status": { "type": "string", "enum": ["ONLINE", "STANDBY", "OFFLINE"] },
+        "batteryPercent": { "type": "integer" },
+        "lastCommand": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "formFactor", "status", "batteryPercent", "lastCommand", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner profile and voice/UI customization settings."
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/MemoryItem" },
+      "description": "Personal memory entries scoped to the authenticated user."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/ProductivityItem" },
+      "description": "Notes, todos, reminders, and alarms scoped to the authenticated user."
+    },
+    "/users/{userId}/smart_devices/{deviceId}": {
+      "schema": { "$ref": "#/entities/SmartDevice" },
+      "description": "Smart home devices scoped to the authenticated user."
+    },
+    "/users/{userId}/ecosystem_devices/{deviceId}": {
+      "schema": { "$ref": "#/entities/EcosystemDevice" },
+      "description": "Connected phone, laptop, watch, and tablet endpoints."
+    }
+  }
+}

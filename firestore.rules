@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.preferredName is string && data.preferredName.size() >= 1 && data.preferredName.size() <= 60 &&
+             data.honorific is string && data.honorific.size() >= 1 && data.honorific.size() <= 30 &&
+             data.voicePersonality in ['JARVIS', 'BIGG_BOSS', 'FEMALE_INDIAN', 'STANDARD_ASSISTANT'] &&
+             data.voicePitch is number && data.voicePitch >= 0.5 && data.voicePitch <= 2.0 &&
+             data.voiceSpeed is number && data.voiceSpeed >= 0.5 && data.voiceSpeed <= 2.0 &&
+             data.voiceTone is string && data.voiceTone.size() >= 1 && data.voiceTone.size() <= 40 &&
+             data.responseLength in ['CONCISE', 'BALANCED', 'DETAILED'] &&
+             data.languageMode in ['HINGLISH', 'ENGLISH_IN', 'HINDI'] &&
+             data.darkMode is bool &&
+             data.ringBrightness is number && data.ringBrightness >= 0.2 && data.ringBrightness <= 1.0 &&
+             data.animationSpeed is number && data.animationSpeed >= 0.4 && data.animationSpeed <= 2.0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMemoryItem(data) {
+      return data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 2000 &&
+             data.pinned is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidProductivityItem(data) {
+      return data.kind in ['NOTE', 'TODO', 'REMINDER', 'ALARM'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+             data.details is string && data.details.size() <= 3000 &&
+             data.completed is bool &&
+             data.dueAtMillis is int && data.dueAtMillis >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidSmartDevice(data) {
+      return data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.room is string && data.room.size() >= 1 && data.room.size() <= 60 &&
+             data.category in ['LIGHT', 'AC', 'FAN', 'LOCK', 'TV', 'SCENE'] &&
+             data.isOn is bool &&
+             data.level is int && data.level >= 0 && data.level <= 100 &&
+             data.temperature is int && data.temperature >= 16 && data.temperature <= 32 &&
+             data.isLocked is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidEcosystemDevice(data) {
+      return data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.formFactor in ['PHONE', 'LAPTOP', 'WATCH', 'TABLET'] &&
+             data.status in ['ONLINE', 'STANDBY', 'OFFLINE'] &&
+             data.batteryPercent is int && data.batteryPercent >= 0 && data.batteryPercent <= 100 &&
+             data.lastCommand is string && data.lastCommand.size() <= 300 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'preferredName', 'honorific', 'voicePersonality',
+                         'voicePitch', 'voiceSpeed', 'voiceTone', 'responseLength',
+                         'languageMode', 'darkMode', 'ringBrightness', 'animationSpeed',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'preferredName', 'honorific', 'voicePersonality',
+                         'voicePitch', 'voiceSpeed', 'voiceTone', 'responseLength',
+                         'languageMode', 'darkMode', 'ringBrightness', 'animationSpeed',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'preferredName', 'honorific', 'voicePersonality',
+                         'voicePitch', 'voiceSpeed', 'voiceTone', 'responseLength',
+                         'languageMode', 'darkMode', 'ringBrightness', 'animationSpeed',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /memories/{memoryId} {
+        allow get: if isOwner(userId) && isValidId(memoryId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         incoming().keys().hasAll(['category', 'title', 'content', 'pinned', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['category', 'title', 'content', 'pinned', 'createdAt', 'updatedAt']) &&
+                         isValidMemoryItem(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         isValidMemoryItem(incoming()) &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['category', 'title', 'content', 'pinned', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(memoryId);
+      }
+
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(taskId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         incoming().keys().hasAll(['kind', 'title', 'details', 'completed', 'dueAtMillis', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['kind', 'title', 'details', 'completed', 'dueAtMillis', 'createdAt', 'updatedAt']) &&
+                         isValidProductivityItem(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         isValidProductivityItem(incoming()) &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['kind', 'title', 'details', 'completed', 'dueAtMillis', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+
+      match /smart_devices/{deviceId} {
+        allow get: if isOwner(userId) && isValidId(deviceId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(deviceId) &&
+                         incoming().keys().hasAll(['name', 'room', 'category', 'isOn', 'level', 'temperature', 'isLocked', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['name', 'room', 'category', 'isOn', 'level', 'temperature', 'isLocked', 'createdAt', 'updatedAt']) &&
+                         isValidSmartDevice(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(deviceId) &&
+                         isValidSmartDevice(incoming()) &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'room', 'category', 'isOn', 'level', 'temperature', 'isLocked', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(deviceId);
+      }
+
+      match /ecosystem_devices/{deviceId} {
+        allow get: if isOwner(userId) && isValidId(deviceId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(deviceId) &&
+                         incoming().keys().hasAll(['name', 'formFactor', 'status', 'batteryPercent', 'lastCommand', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['name', 'formFactor', 'status', 'batteryPercent', 'lastCommand', 'createdAt', 'updatedAt']) &&
+                         isValidEcosystemDevice(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(deviceId) &&
+                         isValidEcosystemDevice(incoming()) &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'formFactor', 'status', 'batteryPercent', 'lastCommand', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(deviceId);
+      }
+    }
+  }
+}

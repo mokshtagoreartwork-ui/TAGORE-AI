@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer holographic segmented ring -->
+    <path
+        android:pathData="M54,24 A30,30 0 1,1 53.99,24 Z"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="3.2"
+        android:fillColor="#00000000" />
+    <!-- Secondary orbital arc (top-right to bottom-right) -->
+    <path
+        android:pathData="M54,30 A24,24 0 0,1 78,54"
+        android:strokeColor="#40F4FF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- Secondary orbital arc (bottom-left to top-left) -->
+    <path
+        android:pathData="M54,78 A24,24 0 0,1 30,54"
+        android:strokeColor="#40F4FF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- Inner counter-rotating ring -->
+    <path
+        android:pathData="M54,36 A18,18 0 1,1 53.99,36 Z"
+        android:strokeColor="#00B8D4"
+        android:strokeWidth="2.0"
+        android:fillColor="#00000000" />
+    <!-- Core energy halo -->
+    <path
+        android:pathData="M54,44 A10,10 0 1,1 53.99,44 Z"
+        android:fillColor="#3300E5FF"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="1.4" />
+    <!-- Pure cyan core nucleus -->
+    <path
+        android:pathData="M54,49.5 A4.5,4.5 0 1,1 53.99,49.5 Z"
+        android:fillColor="#80F8FF" />
+    <!-- Cardinal orbital nodes -->
+    <path
+        android:pathData="M54,22 A2,2 0 1,1 53.99,22 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M54,82 A2,2 0 1,1 53.99,82 Z"
+        android:fillColor="#00E5FF" />
+</vector>

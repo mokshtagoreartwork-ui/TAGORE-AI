@@ -33,7 +33,10 @@ import com.example.ui.screens.WorkspaceScreen
 import com.example.ui.theme.TagoreTheme
 import com.example.ui.viewmodel.TagoreViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.flow.flowOf
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,13 +59,19 @@ fun TagoreRootApp() {
     val prefsRepo = remember(context) { PreferencesRepository(context.applicationContext) }
     val rootPrefs by prefsRepo.preferencesFlow.collectAsStateWithLifecycle(initialValue = UserPreferences())
 
-    val currentUser by Firebase.auth.authStateFlow()
-        .collectAsStateWithLifecycle(initialValue = Firebase.auth.currentUser)
+    val isFirebaseReady = remember(context) { FirebaseApp.getApps(context).isNotEmpty() }
+    val authFlow = remember(isFirebaseReady) {
+        if (isFirebaseReady) Firebase.auth.authStateFlow() else flowOf<FirebaseUser?>(null)
+    }
+    val initialFirebaseUser = remember(isFirebaseReady) {
+        if (isFirebaseReady) Firebase.auth.currentUser else null
+    }
+    val currentUser by authFlow.collectAsStateWithLifecycle(initialValue = initialFirebaseUser)
 
-    var offlineLocalMode by rememberSaveable { mutableStateOf(false) }
+    var offlineLocalMode by rememberSaveable { mutableStateOf(!isFirebaseReady) }
 
-    LaunchedEffect(Unit) {
-        if (Firebase.auth.currentUser == null) {
+    LaunchedEffect(isFirebaseReady) {
+        if (isFirebaseReady && Firebase.auth.currentUser == null) {
             val cm = CredentialManager.create(context)
             attemptAutoSignIn(
                 context = context,

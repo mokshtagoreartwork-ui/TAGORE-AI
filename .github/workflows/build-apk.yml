@@ -1,3 +1,4 @@
+
 name: Build TAGORE APK
 
 on:
@@ -51,10 +52,4 @@ jobs:
         with:
           name: TAGORE-AI-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-      - name: Upload TAGORE APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: TAGORE-AI-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          if-no-files-found: error        
